@@ -94,6 +94,16 @@ class DataLoaderSet():
         self.test = torchtext.data.Iterator(
             data_set.test, batch_size=batch_size, train=False, sort=False)
 
+    def __getitem__(self, name):
+        dl = None
+        if name == "tarin":
+            dl = self.train
+        elif name == "validation":
+            dl = self.validation
+        elif name == "test":
+            dl = self.test
+        return dl
+
 
 if __name__ == "__main__":
     import argparse

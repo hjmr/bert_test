@@ -6,12 +6,12 @@ class BertClassifier(nn.Module):
         super(BertClassifier, self).__init__()
 
         self.bert = bert_base
-        self.out_linear = nn.Linear(
+        self.cls = nn.Linear(
             in_features=self.bert.pooler.dense.out_features,
             out_features=out_features)
 
-        nn.init.normal_(self.out_linear.weight, std=0.02)
-        nn.init.normal_(self.out_linear.bias, 0)
+        nn.init.normal_(self.cls.weight, std=0.02)
+        nn.init.normal_(self.cls.bias, 0)
 
     def forward(
             self,
@@ -38,8 +38,8 @@ class BertClassifier(nn.Module):
                 input_ids, token_type_ids, attention_mask, output_all_encoded_layers, attention_show_flg)
         # 入力文章の1単語目[CLS]の特徴量を使用して、ポジ・ネガを分類します
         vec_0 = encoded_layers[:, 0, :]
-        vec_0 = vec_0.view(-1, self.out_linear.in_features)  # sizeを[batch_size, hidden_sizeに変換
-        out = self.out_linear(vec_0)
+        vec_0 = vec_0.view(-1, self.cls.in_features)  # sizeを[batch_size, hidden_sizeに変換
+        out = self.cls(vec_0)
 
         # attention_showのときは、attention_probs（1番最後の）もリターンする
         if attention_show_flg == True:
