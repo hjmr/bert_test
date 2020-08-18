@@ -1,0 +1,125 @@
+import MeCab
+
+import torchtext
+
+from utils.bert import BertTokenizer, load_vocab
+
+
+class FieldSet():
+    def __init__(self, vocab_file, mecab_dict=None, max_text_length=256):
+        self.tokenizer = BertTokenizer(vocab_file=vocab_file, do_lower_case=True)
+        if mecab_dict is not None:
+            self.tagger = MeCab.Tagger("-d {}".format(mecab_dict))
+        else:
+            self.tagger = MeCab.Tagger("")
+        self.text, self.label = self._prepare(max_text_length)
+        self.vocab, self.ids_to_tokens = self._load_vocab(vocab_file)
+
+    def _wakati_jp_text(self, text):
+        self.tagger.parse("")  # to avoid bug
+
+        word_list = []
+        token = self.tagger.parseToNode(text.strip())
+        while token:
+            features = token.feature.split(",")
+            if features[0] == "記号":
+                if features[1] == "句点":
+                    word_list.append(".")
+                elif features[1] == "読点":
+                    word_list.append(",")
+                else:
+                    word_list.append(features[6] if 0 < len(features[6]) else token.surface)
+            token = token.next
+        wakati = " ".join(word_list)
+        return wakati
+
+    def _prepare(self, max_text_length):
+        def tokenize(text):
+            wakati = self._wakati_jp_text(text)
+            tokens = self.tokenizer.tokenize(wakati)
+            return tokens
+
+        text_field = torchtext.data.Field(
+            sequential=True,
+            use_vocab=True,
+            fix_length=max_text_length,
+            preprocessing=None,
+            postprocessing=None,
+            lower=True,
+            tokenize=tokenize,
+            include_lengths=True,
+            init_token="[CLS]",
+            eos_token="[SEP]",
+            pad_token="[PAD]",
+            unk_token="[UNK]",
+            batch_first=True,
+            stop_words=None)
+        label_field = torchtext.data.Field(sequential=False, use_vocab=False)
+        return text_field, label_field
+
+    def _load_vocab(self, vocab_file):
+        vocab, ids_to_tokens = load_vocab(vocab_file)
+        return vocab, ids_to_tokens
+
+    def build_vocab(self, train_ds):
+        self.text.build_vocab(train_ds, min_freq=1)
+        self.text.stoi = self.vocab
+
+
+class DataSet():
+    def __init__(self, train_tsv, test_tsv, field_set):
+        self.train, self.validation, self.test = self._load_tsv(
+            train_tsv, test_tsv, field_set)
+        field_set.build_vocab(self.train)
+
+    def _load_tsv(self, train_tsv, test_tsv, field_set):
+        _train_dataset = torchtext.data.TabularDataset(
+            path=train_tsv, format="tsv",
+            fields=[('Text', field_set.text), ('Label', field_set.label)])
+
+        test_dataset = torchtext.data.TabularDataset(
+            path=test_tsv, format="tsv",
+            fields=[('Text', field_set.text), ('Label', field_set.label)])
+
+        train_dataset, validation_dataset = _train_dataset.split(split_ratio=0.8)
+        return train_dataset, validation_dataset, test_dataset
+
+
+class DataLoaderSet():
+    def __init__(self, data_set, batch_size=16):
+        self.train = torchtext.data.Iterator(
+            data_set.train, batch_size=batch_size, train=True)
+        self.validation = torchtext.data.Iterator(
+            data_set.validation, batch_size=batch_size, train=False, sort=False)
+        self.test = torchtext.data.Iterator(
+            data_set.test, batch_size=batch_size, train=False, sort=False)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    def parse_arg():
+        parser = argparse.ArgumentParser(description="Test DataSet for BERT for Japanese Texts.")
+        parser.add_argument("--mecab_dict", type=str, help="MeCab dictionary.")
+        parser.add_argument("--batch_size", type=int, default=16, help="batch size.")
+        parser.add_argument("--text_length", type=int, default=256, help="the length of texts.")
+        parser.add_argument("train_tsv", type=str, nargs=1, help="TSV file for train data.")
+        parser.add_argument("test_tsv", type=str, nargs=1, help="TSV file for test data.")
+        parser.add_argument("vocab_file", type=str, nargs=1, help="a vocabulary file.")
+        return parser.parse_args()
+
+    args = parse_arg()
+
+    field_set = FieldSet(args.vocab_file[0], args.mecab_dict, args.text_length)
+    data_set = DataSet(args.train_tsv[0], args.test_tsv[0], field_set)
+    data_loader = DataLoaderSet(data_set, args.batch_size)
+
+    batch = next(iter(data_loader.validation))
+    print(batch.Text)
+    print(batch.Label)
+
+    # ミニバッチの1文目を確認してみる
+    text_minibatch_1 = (batch.Text[0][1]).numpy()
+    # IDを単語に戻す
+    text = field_set.tokenizer.convert_ids_to_tokens(text_minibatch_1)
+    print(text)
