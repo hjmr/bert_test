@@ -103,11 +103,11 @@ if __name__ == "__main__":
     train_ds, validation_ds = train_validation_ds.split(split_ratio=0.8)
     field_set.build_vocab(train_ds)
 
-    train_data = get_data_loader(train_ds, args.batch_size, for_train=True)
-    validation_data = get_data_loader(validation_ds, args.batch_size)
-    test_data = get_data_loader(load_data_set(args.test_tsv[0], field_set), args.batch_size)
+    train_dl = get_data_loader(train_ds, args.batch_size, for_train=True)
+    validation_dl = get_data_loader(validation_ds, args.batch_size)
+    test_dl = get_data_loader(load_data_set(args.test_tsv[0], field_set), args.batch_size)
 
-    batch = next(iter(validation_data))
+    batch = next(iter(validation_dl))
     print(batch.Text)
     print(batch.Label)
 
