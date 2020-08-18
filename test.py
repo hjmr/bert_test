@@ -56,7 +56,7 @@ def run_main():
     field_set = FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
     test_ds = load_data_set(args.test_tsv[0], field_set)
     test_dl = get_data_loader(test_ds, args.batch_size, for_train=False)
-    field_set.build_vocab(train_ds)
+    field_set.build_vocab(test_ds)
     print("done.", flush=True)
 
     print("2. loading network ... ", end="", flush=True)
