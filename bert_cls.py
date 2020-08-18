@@ -1,9 +1,4 @@
-import numpy as np
-
-import torch
 from torch import nn
-import torch.optim as optim
-import torchtext
 
 
 class BertClassifier(nn.Module):
