@@ -12,9 +12,9 @@ class BertClassifier(nn.Module):
 
         nn.init.normal_(self.cls.weight, std=0.02)
         nn.init.normal_(self.cls.bias, 0)
-        self.setup_grad()
+        self._setup_grad()
 
-    def setup_grad(self):
+    def _setup_grad(self):
         # 1. まず全部を、勾配計算Falseにしてしまう
         for _, param in self.named_parameters():
             param.requires_grad = False
