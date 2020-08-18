@@ -109,16 +109,21 @@ def predict(net, inputs):
 def run_main():
     args = parse_arg()
 
+    print("1. preparing datasets ... ", end="", flush=True)
     field_set = FieldSet(args.vocab_file[0], args.text_length, args.mecab_dict)
     test_ds = load_data_set(args.test_tsv[0], field_set)
     test_dl = get_data_loader(test_ds, args.batch_size, for_train=False)
+    print("done.", flush=True)
 
+    print("2. loading network ... ", end="", flush=True)
     net = torch.load(args.load_model[0], map_location=torch.device('cpu'))
     net.eval()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     net.to(device)
+    print("done.", flush=True)
 
+    print("3. predicting.", flush=True)
     batch = next(iter(test_dl))
     inputs = batch.Text[0].to(device)  # 文章
     preds, attention_probs = predict(net, inputs)

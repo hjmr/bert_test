@@ -139,7 +139,7 @@ def run_main():
     if args.random_seed is not None:
         init_random_seed(args.random_seed)
 
-    print("--- prepare datasets ---", flush=True)
+    print("1. preparing datasets ... ", end="", flush=True)
     field_set = FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
 
     data_set = load_data_set(args.train_tsv[0], field_set)
@@ -148,7 +148,9 @@ def run_main():
 
     train_dl = get_data_loader(train_ds, args.batch_size, for_train=True)
     validation_dl = get_data_loader(validation_ds, args.batch_size, for_train=False)
+    print("done.", flush=True)
 
+    print("2. preparing network ... ", end="", flush=True)
     conf = get_config(file_path=args.conf[0])
     bert_base = BertModel(conf)
     bert_base = set_learned_params(bert_base, weights_path=args.model[0])
@@ -158,8 +160,9 @@ def run_main():
     optimizer = get_optimizer(net)
     criterion = torch.nn.CrossEntropyLoss()  # クラス分けの場合
     # criterion = torch.nn.MSELoss()  # 数値予測の場合
+    print("done.", flush=True)
 
-    print("--- start to train ---", flush=True)
+    print("3. start to train.", flush=True)
     data_loader_set = {"train": train_dl, "validation": validation_dl}
     net_trained = train_model(net, data_loader_set, criterion, optimizer, args.epoch)
     if args.save_path is not None:

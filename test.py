@@ -52,19 +52,25 @@ def test_model(net, data_loader, criterion, device):
 def run_main():
     args = parse_arg()
 
+    print("1. preparing datasets ... ", end="", flush=True)
     field_set = FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
     test_ds = load_data_set(args.test_tsv[0], field_set)
     test_dl = get_data_loader(test_ds, args.batch_size, for_train=False)
+    field_set.build_vocab(train_ds)
+    print("done.", flush=True)
 
+    print("2. loading network ... ", end="", flush=True)
     net = torch.load(args.load_model[0], map_location=torch.device('cpu'))
     net.eval()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     net.to(device)
+    print("done.", flush=True)
 
     criterion = torch.nn.CrossEntropyLoss()  # クラス分けの場合
     # criterion = torch.nn.MSELoss()  # 数値予測の場合
 
+    print("3. run tests. ", flush=True)
     epoch_acc = test_model(net, test_dl, criterion, device)
     print("# of test data: {} || Acc. {:.4f}".format(len(test_dl.dataset), epoch_acc))
 
