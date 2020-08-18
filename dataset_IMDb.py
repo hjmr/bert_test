@@ -7,7 +7,7 @@ from utils.bert import BertTokenizer, load_vocab
 
 
 class FieldSet():
-    def __init__(self, vocab_file, max_text_length=256):
+    def __init__(self, vocab_file, max_text_length=256, mecab_dict=None):
         self.tokenizer = BertTokenizer(vocab_file=vocab_file, do_lower_case=True)
         self.text, self.label = self._prepare(max_text_length)
         self.vocab, self.ids_to_tokens = self._load_vocab(vocab_file)
