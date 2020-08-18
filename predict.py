@@ -15,10 +15,11 @@ def parse_arg():
     parser.add_argument("--batch_size", type=int, default=64, help="batch size.")
     parser.add_argument("--text_length", type=int, default=256, help="the length of texts.")
     #
-    parser.add_argument("--load_model", type=str, nargs=1, help="a path to trained net.")
     parser.add_argument("--index", type=int, default=0, help="index of the text to be predicted.")
-    #
     parser.add_argument("--save_html", type=str, help="output HTML file.")
+    #
+    parser.add_argument("conf", type=str, nargs=1, help="a BERT configuration file.")
+    parser.add_argument("load_path", type=str, nargs=1, help="a path to trained net.")
     #
     parser.add_argument("tsv_file", type=str, nargs=1, help="TSV file for test.")
     parser.add_argument("vocab_file", type=str, nargs=1, help="a vocabulary file.")
