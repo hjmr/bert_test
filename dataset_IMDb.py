@@ -1,4 +1,5 @@
-import MeCab
+import string
+import re
 
 import torchtext
 
@@ -6,37 +7,32 @@ from utils.bert import BertTokenizer, load_vocab
 
 
 class FieldSet():
-    def __init__(self, vocab_file, max_text_length=256, mecab_dict=None):
+    def __init__(self, vocab_file, max_text_length=256):
         self.tokenizer = BertTokenizer(vocab_file=vocab_file, do_lower_case=True)
-        if mecab_dict is not None:
-            self.tagger = MeCab.Tagger("-d {}".format(mecab_dict))
-        else:
-            self.tagger = MeCab.Tagger("")
         self.text, self.label = self._prepare(max_text_length)
         self.vocab, self.ids_to_tokens = self._load_vocab(vocab_file)
 
     def _prepare(self, max_text_length):
-        def _wakati_jp_text(text):
-            self.tagger.parse("")  # to avoid bug
+        def _preprocess_IMDb(text):
+            '''IMDbの前処理'''
+            # 改行コードを消去
+            text = re.sub('<br />', '', text)
 
-            word_list = []
-            token = self.tagger.parseToNode(text.strip())
-            while token:
-                features = token.feature.split(",")
-                if features[0] == "記号":
-                    if features[1] == "句点":
-                        word_list.append(".")
-                    elif features[1] == "読点":
-                        word_list.append(",")
-                    else:
-                        word_list.append(features[6] if 0 < len(features[6]) else token.surface)
-                token = token.next
-            wakati = " ".join(word_list)
-            return wakati
+            # カンマ、ピリオド以外の記号をスペースに置換
+            for p in string.punctuation:
+                if (p == ".") or (p == ","):
+                    continue
+                else:
+                    text = text.replace(p, " ")
 
-        def tokenize_jp(text, tokenizer=self.tokenizer):
-            wakati = _wakati_jp_text(text)
-            tokens = tokenizer.tokenize(wakati)
+            # ピリオドなどの前後にはスペースを入れておく
+            text = text.replace(".", " . ")
+            text = text.replace(",", " , ")
+            return text
+
+        def tokenize_IMDb(text, tokenizer=self.tokenizer):
+            text = _preprocess_IMDb(text)
+            tokens = tokenizer.tokenize(text)
             return tokens
 
         text_field = torchtext.data.Field(
@@ -90,7 +86,6 @@ if __name__ == "__main__":
 
     def parse_arg():
         parser = argparse.ArgumentParser(description="Test DataSet for BERT for Japanese Texts.")
-        parser.add_argument("--mecab_dict", type=str, help="MeCab dictionary.")
         parser.add_argument("--batch_size", type=int, default=16, help="batch size.")
         parser.add_argument("--text_length", type=int, default=256, help="the length of texts.")
         parser.add_argument("train_tsv", type=str, nargs=1, help="TSV file for train data.")
@@ -100,7 +95,7 @@ if __name__ == "__main__":
 
     args = parse_arg()
 
-    field_set = FieldSet(args.vocab_file[0], args.text_length, args.mecab_dict)
+    field_set = FieldSet(args.vocab_file[0], args.text_length)
 
     train_validation_ds = load_data_set(args.train_tsv[0], field_set)
     train_ds, validation_ds = train_validation_ds.split(split_ratio=0.8)

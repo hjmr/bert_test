@@ -7,7 +7,8 @@ import numpy as np
 import torch
 
 from utils.bert import BertModel, get_config, set_learned_params
-from textdata_jp import FieldSet, load_data_set, get_data_loader
+from dataset_jp_text import FieldSet, load_data_set, get_data_loader
+# from dataset_IMDb import FieldSet, load_data_set, get_data_loader
 from bert_cls import BertClassifier
 
 
