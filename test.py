@@ -52,7 +52,7 @@ def test_model(net, data_loader, criterion, device):
 def run_main():
     args = parse_arg()
 
-    field_set = FieldSet(args.vocab_file[0], args.mecab_dict, args.text_length)
+    field_set = FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
     test_ds = load_data_set(args.test_tsv[0], field_set)
     test_dl = get_data_loader(test_ds, args.batch_size, for_train=False)
 

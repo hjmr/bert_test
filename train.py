@@ -139,7 +139,7 @@ def run_main():
     if args.random_seed is not None:
         init_random_seed(args.random_seed)
 
-    field_set = FieldSet(args.vocab_file[0], args.mecab_dict, args.text_length)
+    field_set = FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
 
     data_set = load_data_set(args.train_tsv[0], field_set)
     train_ds, validation_ds = data_set.split(split_ratio=0.8, random_state=random.seed(1234))
@@ -147,16 +147,6 @@ def run_main():
 
     train_dl = get_data_loader(train_ds, args.batch_size, for_train=True)
     validation_dl = get_data_loader(validation_ds, args.batch_size, for_train=False)
-
-    batch = next(iter(validation_dl))
-    print(batch.Text)
-    print(batch.Label)
-
-    # ミニバッチの1文目を確認してみる
-    text_minibatch_1 = (batch.Text[0][1]).numpy()
-    # IDを単語に戻す
-    text = field_set.tokenizer.convert_ids_to_tokens(text_minibatch_1)
-    print(text)
 
     conf = get_config(file_path=args.conf[0])
     bert_base = BertModel(conf)

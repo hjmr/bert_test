@@ -1,5 +1,6 @@
 import string
 import re
+import random
 
 import torchtext
 
@@ -7,7 +8,7 @@ from utils.bert import BertTokenizer, load_vocab
 
 
 class FieldSet():
-    def __init__(self, vocab_file, max_text_length=256, mecab_dict=None):
+    def __init__(self, vocab_file, max_text_length, mecab_dict=None):
         self.tokenizer = BertTokenizer(vocab_file=vocab_file, do_lower_case=True)
         self.text, self.label = self._prepare(max_text_length)
         self.vocab, self.ids_to_tokens = self._load_vocab(vocab_file)
@@ -100,7 +101,7 @@ if __name__ == "__main__":
     field_set = FieldSet(args.vocab_file[0], args.text_length)
 
     train_validation_ds = load_data_set(args.train_tsv[0], field_set)
-    train_ds, validation_ds = train_validation_ds.split(split_ratio=0.8)
+    train_ds, validation_ds = train_validation_ds.split(split_ratio=0.8, random_state=random.seed(1234))
     field_set.build_vocab(train_ds)
 
     train_dl = get_data_loader(train_ds, args.batch_size, for_train=True)
