@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "bert_test"
+version = "0.1.0"
+description = ""
+authors = ["hjmr <2620990+hjmr@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+torch = "^1.6.0"
+torchtext = "^0.7.0"
+attrdict = "^2.0.1"
+mecab = "^0.996.2"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "^1.5.4"
+pylint = "^2.5.3"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
