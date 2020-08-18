@@ -165,7 +165,7 @@ def run_main():
     conf = get_config(file_path=args.conf[0])
     bert_base = BertModel(conf)
     bert_base = set_learned_params(bert_base, weights_path=args.model[0])
-    net = BertClassifier(bert_base, out_features=1)
+    net = BertClassifier(bert_base, out_features=2)
 
     optimizer = get_optimizer(net)
     criterion = torch.nn.CrossEntropyLoss()  # クラス分けの場合
