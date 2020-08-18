@@ -139,7 +139,7 @@ def run_main():
     if args.random_seed is not None:
         init_random_seed(args.random_seed)
 
-    print("--- prepare datasets ---")
+    print("--- prepare datasets ---", flush=True)
     field_set = FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
 
     data_set = load_data_set(args.train_tsv[0], field_set)
@@ -159,7 +159,7 @@ def run_main():
     criterion = torch.nn.CrossEntropyLoss()  # クラス分けの場合
     # criterion = torch.nn.MSELoss()  # 数値予測の場合
 
-    print("--- start to train ---")
+    print("--- start to train ---", flush=True)
     data_loader_set = {"train": train_dl, "validation": validation_dl}
     net_trained = train_model(net, data_loader_set, criterion, optimizer, args.epoch)
     if args.save_path is not None:
