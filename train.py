@@ -46,12 +46,12 @@ def get_optimizer(net):
 
 def train_iter_log(iteration, loss, duration, acc):
     print('Iter {} || Loss: {:.4f} Acc: {} || {:.4f} sec'.format(
-        iteration, loss, acc, duration))
+        iteration, loss, acc, duration), flush=True)
 
 
 def train_epoch_log(epoch, num_epochs, phase, epoch_loss, epoch_acc):
     print('Epoch {}/{} | {:^5} | Loss: {:.4f} Acc: {:.4f}'.format(
-        epoch+1, num_epochs, phase, epoch_loss, epoch_acc))
+        epoch+1, num_epochs, phase, epoch_loss, epoch_acc), flush=True)
 
 
 def train_model(net, data_loader_set, criterion, optimizer, num_epochs):
