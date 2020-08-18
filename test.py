@@ -32,11 +32,12 @@ def test_model(net, data_loader, criterion, device):
         # 順伝搬（forward）計算
         with torch.set_grad_enabled(False):
             # BertForIMDbに入力
-            outputs = net(inputs,
-                          token_type_ids=None,
-                          attention_mask=None,
-                          output_all_encoded_layers=False,
-                          attention_show_flg=False)
+            outputs = net(
+                inputs,
+                token_type_ids=None,
+                attention_mask=None,
+                output_all_encoded_layers=False,
+                attention_show_flg=False)
 
             loss = criterion(outputs, labels)  # 損失を計算
             _, preds = torch.max(outputs, 1)  # ラベルを予測

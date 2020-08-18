@@ -110,11 +110,12 @@ def train_model(net, data_loader_set, criterion, optimizer, num_epochs):
 
                 # 順伝搬（forward）計算
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = net(inputs,
-                                  token_type_ids=None,
-                                  attention_mask=None,
-                                  output_all_encoded_layers=False,
-                                  attention_show_flg=False)
+                    outputs = net(
+                        inputs,
+                        token_type_ids=None,
+                        attention_mask=None,
+                        output_all_encoded_layers=False,
+                        attention_show_flg=False)
 
                     loss = criterion(outputs, labels)  # 損失を計算
                     _, preds = torch.max(outputs, 1)  # ラベルを予測
@@ -147,7 +148,7 @@ def train_model(net, data_loader_set, criterion, optimizer, num_epochs):
     return net
 
 
-def main():
+def run_main():
     args = parse_arg()
     if args.random_seed is not None:
         init_random_seed(args.random_seed)
@@ -177,4 +178,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run_main()
