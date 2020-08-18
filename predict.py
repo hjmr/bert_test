@@ -131,7 +131,7 @@ def run_main():
 
     html = mk_html(args.index, batch, preds, attention_probs, field_set.tokenizer)
     if args.save_html is not None:
-        with optn(args.save_html, "w") as f:
+        with open(args.save_html, "w") as f:
             f.write(html)
     else:
         print(html)
