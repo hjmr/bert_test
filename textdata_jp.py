@@ -1,3 +1,5 @@
+import string
+import re
 import MeCab
 
 import torchtext
@@ -15,28 +17,50 @@ class FieldSet():
         self.text, self.label = self._prepare(max_text_length)
         self.vocab, self.ids_to_tokens = self._load_vocab(vocab_file)
 
-    def _wakati_jp_text(self, text):
-        self.tagger.parse("")  # to avoid bug
-
-        word_list = []
-        token = self.tagger.parseToNode(text.strip())
-        while token:
-            features = token.feature.split(",")
-            if features[0] == "記号":
-                if features[1] == "句点":
-                    word_list.append(".")
-                elif features[1] == "読点":
-                    word_list.append(",")
-                else:
-                    word_list.append(features[6] if 0 < len(features[6]) else token.surface)
-            token = token.next
-        wakati = " ".join(word_list)
-        return wakati
-
     def _prepare(self, max_text_length):
-        def tokenize(text):
-            wakati = self._wakati_jp_text(text)
-            tokens = self.tokenizer.tokenize(wakati)
+        def _preprocess_IMDb(text):
+            '''IMDbの前処理'''
+            # 改行コードを消去
+            text = re.sub('<br />', '', text)
+
+            # カンマ、ピリオド以外の記号をスペースに置換
+            for p in string.punctuation:
+                if (p == ".") or (p == ","):
+                    continue
+                else:
+                    text = text.replace(p, " ")
+
+            # ピリオドなどの前後にはスペースを入れておく
+            text = text.replace(".", " . ")
+            text = text.replace(",", " , ")
+            return text
+
+        def _wakati_jp_text(text):
+            self.tagger.parse("")  # to avoid bug
+
+            word_list = []
+            token = self.tagger.parseToNode(text.strip())
+            while token:
+                features = token.feature.split(",")
+                if features[0] == "記号":
+                    if features[1] == "句点":
+                        word_list.append(".")
+                    elif features[1] == "読点":
+                        word_list.append(",")
+                    else:
+                        word_list.append(features[6] if 0 < len(features[6]) else token.surface)
+                token = token.next
+            wakati = " ".join(word_list)
+            return wakati
+
+        def tokenize_IMDb(text, tokenizer=self.tokenizer):
+            text = _preprocess_IMDb(text)
+            tokens = tokenizer.tokenize(text)
+            return tokens
+
+        def tokenize_jp(text, tokenizer=self.tokenizer):
+            wakati = _wakati_jp_text(text)
+            tokens = tokenizer.tokenize(wakati)
             return tokens
 
         text_field = torchtext.data.Field(
@@ -46,7 +70,8 @@ class FieldSet():
             preprocessing=None,
             postprocessing=None,
             lower=True,
-            tokenize=tokenize,
+            # tokenize=tokenize_jp,
+            tokenize=tokenize_IMDb,
             include_lengths=True,
             init_token="[CLS]",
             eos_token="[SEP]",
@@ -63,46 +88,25 @@ class FieldSet():
 
     def build_vocab(self, train_ds):
         self.text.build_vocab(train_ds, min_freq=1)
-        self.text.stoi = self.vocab
+        self.text.vocab.stoi = self.vocab
 
 
-class DataSet():
-    def __init__(self, train_tsv, test_tsv, field_set):
-        self.train, self.validation, self.test = self._load_tsv(
-            train_tsv, test_tsv, field_set)
-        field_set.build_vocab(self.train)
-
-    def _load_tsv(self, train_tsv, test_tsv, field_set):
-        _train_dataset = torchtext.data.TabularDataset(
-            path=train_tsv, format="tsv",
-            fields=[('Text', field_set.text), ('Label', field_set.label)])
-
-        test_dataset = torchtext.data.TabularDataset(
-            path=test_tsv, format="tsv",
-            fields=[('Text', field_set.text), ('Label', field_set.label)])
-
-        train_dataset, validation_dataset = _train_dataset.split(split_ratio=0.8)
-        return train_dataset, validation_dataset, test_dataset
+def load_data_set(tsv_file, field_set):
+    _ds = torchtext.data.TabularDataset(
+        path=tsv_file, format="tsv",
+        fields=[('Text', field_set.text), ('Label', field_set.label)])
+    return _ds
 
 
-class DataLoaderSet():
-    def __init__(self, data_set, batch_size=16):
-        self.train = torchtext.data.Iterator(
-            data_set.train, batch_size=batch_size, train=True)
-        self.validation = torchtext.data.Iterator(
-            data_set.validation, batch_size=batch_size, train=False, sort=False)
-        self.test = torchtext.data.Iterator(
-            data_set.test, batch_size=batch_size, train=False, sort=False)
-
-    def __getitem__(self, name):
-        dl = None
-        if name == "tarin":
-            dl = self.train
-        elif name == "validation":
-            dl = self.validation
-        elif name == "test":
-            dl = self.test
-        return dl
+def get_data_loader(data_set, batch_size=16, for_train=False):
+    _dl = None
+    if for_train:
+        _dl = torchtext.data.Iterator(
+            data_set, batch_size=batch_size, train=True)
+    else:
+        _dl = torchtext.data.Iterator(
+            data_set, batch_size=batch_size, train=False, sort=False)
+    return _dl
 
 
 if __name__ == "__main__":
@@ -121,10 +125,16 @@ if __name__ == "__main__":
     args = parse_arg()
 
     field_set = FieldSet(args.vocab_file[0], args.mecab_dict, args.text_length)
-    data_set = DataSet(args.train_tsv[0], args.test_tsv[0], field_set)
-    data_loader = DataLoaderSet(data_set, args.batch_size)
 
-    batch = next(iter(data_loader.validation))
+    train_validation_ds = load_data_set(args.train_tsv[0], field_set)
+    train_ds, validation_ds = train_validation_ds.split(split_ratio=0.8)
+    field_set.build_vocab(train_ds)
+
+    train_data = get_data_loader(train_ds, args.batch_size, for_train=True)
+    validation_data = get_data_loader(validation_ds, args.batch_size)
+    test_data = get_data_loader(load_data_set(args.test_tsv[0], field_set), args.batch_size)
+
+    batch = next(iter(validation_data))
     print(batch.Text)
     print(batch.Label)
 
