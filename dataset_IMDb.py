@@ -42,7 +42,6 @@ class FieldSet():
             preprocessing=None,
             postprocessing=None,
             lower=True,
-            # tokenize=tokenize_jp,
             tokenize=tokenize_IMDb,
             include_lengths=True,
             init_token="[CLS]",
@@ -82,6 +81,9 @@ def get_data_loader(data_set, batch_size=16, for_train=False):
 
 
 if __name__ == "__main__":
+    import warnings
+    warnings.filterwarnings("ignore")
+
     import argparse
 
     def parse_arg():

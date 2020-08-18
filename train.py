@@ -7,13 +7,13 @@ import numpy as np
 import torch
 
 from utils.bert import BertModel, get_config, set_learned_params
-from dataset_jp_text import FieldSet, load_data_set, get_data_loader
-# from dataset_IMDb import FieldSet, load_data_set, get_data_loader
+# from dataset_jp_text import FieldSet, load_data_set, get_data_loader
+from dataset_IMDb import FieldSet, load_data_set, get_data_loader
 from bert_cls import BertClassifier
 
 
 def parse_arg():
-    parser = argparse.ArgumentParser(description="BERT for Japanese Texts.")
+    parser = argparse.ArgumentParser(description="Train BERT model.")
     parser.add_argument("--mecab_dict", type=str, help="MeCab dictionary.")
     parser.add_argument("--batch_size", type=int, default=16, help="batch size.")
     parser.add_argument("--text_length", type=int, default=256, help="the length of texts.")
@@ -22,7 +22,7 @@ def parse_arg():
     parser.add_argument("--conf", type=str, nargs=1, help="a BERT configuration file.")
     parser.add_argument("--model", type=str, nargs=1, help="a trained BERT model file.")
     #
-    parser.add_argument("--epoch", type=int, default=10, help="train epochs.")
+    parser.add_argument("--epoch", type=int, default=5, help="train epochs.")
     parser.add_argument("--save_path", type=str, help="a file to save trained net.")
     #
     parser.add_argument("train_tsv", type=str, nargs=1, help="TSV file for train data.")
@@ -178,4 +178,7 @@ def run_main():
 
 
 if __name__ == "__main__":
+    import warnings
+    warnings.filterwarnings("ignore")
+
     run_main()

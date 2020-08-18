@@ -3,11 +3,12 @@ from tqdm import tqdm
 
 import torch
 
-from dataset_jp_text import FieldSet, load_data_set, get_data_loader
+# from dataset_jp_text import FieldSet, load_data_set, get_data_loader
+from dataset_IMDb import FieldSet, load_data_set, get_data_loader
 
 
 def parse_arg():
-    parser = argparse.ArgumentParser(description="BERT for Japanese Texts.")
+    parser = argparse.ArgumentParser(description="Test BERT model.")
     parser.add_argument("--mecab_dict", type=str, help="MeCab dictionary.")
     parser.add_argument("--batch_size", type=int, default=16, help="batch size.")
     parser.add_argument("--text_length", type=int, default=256, help="the length of texts.")
@@ -69,4 +70,7 @@ def run_main():
 
 
 if __name__ == "__main__":
+    import warnings
+    warnings.filterwarnings("ignore")
+
     run_main()
