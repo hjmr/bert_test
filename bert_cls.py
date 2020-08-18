@@ -12,6 +12,20 @@ class BertClassifier(nn.Module):
 
         nn.init.normal_(self.cls.weight, std=0.02)
         nn.init.normal_(self.cls.bias, 0)
+        self.setup_grad()
+
+    def setup_grad(self):
+        # 1. まず全部を、勾配計算Falseにしてしまう
+        for _, param in self.named_parameters():
+            param.requires_grad = False
+
+        # 2. 最後のBertLayerモジュールを勾配計算ありに変更
+        for _, param in self.bert.encoder.layer[-1].named_parameters():
+            param.requires_grad = True
+
+        # 3. 識別器を勾配計算ありに変更
+        for _, param in self.cls.named_parameters():
+            param.requires_grad = True
 
     def forward(
             self,
@@ -62,5 +76,5 @@ if __name__ == "__main__":
     conf = get_config(file_path=args.conf[0])
     bert_base = BertModel(conf)
     bert_base = set_learned_params(bert_base, weights_path=args.model[0])
-    net = BertClassifier(bert_base, out_features=1)
+    net = BertClassifier(bert_base, out_features=2)
     print(net)

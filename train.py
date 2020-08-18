@@ -36,20 +36,6 @@ def init_random_seed(seed):
     random.seed(seed)
 
 
-def setup_network(net):
-    # 1. まず全部を、勾配計算Falseにしてしまう
-    for _, param in net.named_parameters():
-        param.requires_grad = False
-
-    # 2. 最後のBertLayerモジュールを勾配計算ありに変更
-    for _, param in net.bert.encoder.layer[-1].named_parameters():
-        param.requires_grad = True
-
-    # 3. 識別器を勾配計算ありに変更
-    for _, param in net.cls.named_parameters():
-        param.requires_grad = True
-
-
 def get_optimizer(net):
     optimizer = torch.optim.Adam([
         {'params': net.bert.encoder.layer[-1].parameters(), 'lr': 5e-5},
@@ -109,7 +95,7 @@ def train_model(net, data_loader_set, criterion, optimizer, num_epochs):
                 optimizer.zero_grad()
 
                 # 順伝搬（forward）計算
-                with torch.set_grad_enabled(phase == 'train'):
+                with torch.set_grad_enabled(phase == "train"):
                     outputs = net(
                         inputs,
                         token_type_ids=None,
@@ -156,16 +142,27 @@ def run_main():
     field_set = FieldSet(args.vocab_file[0], args.mecab_dict, args.text_length)
 
     data_set = load_data_set(args.train_tsv[0], field_set)
-    train_ds, validation_ds = data_set.split(split_ratio=0.8)
+    train_ds, validation_ds = data_set.split(split_ratio=0.8, random_state=random.seed(1234))
     field_set.build_vocab(train_ds)
 
     train_dl = get_data_loader(train_ds, args.batch_size, for_train=True)
     validation_dl = get_data_loader(validation_ds, args.batch_size, for_train=False)
 
+    batch = next(iter(validation_dl))
+    print(batch.Text)
+    print(batch.Label)
+
+    # ミニバッチの1文目を確認してみる
+    text_minibatch_1 = (batch.Text[0][1]).numpy()
+    # IDを単語に戻す
+    text = field_set.tokenizer.convert_ids_to_tokens(text_minibatch_1)
+    print(text)
+
     conf = get_config(file_path=args.conf[0])
     bert_base = BertModel(conf)
     bert_base = set_learned_params(bert_base, weights_path=args.model[0])
     net = BertClassifier(bert_base, out_features=2)
+    net.train()
 
     optimizer = get_optimizer(net)
     criterion = torch.nn.CrossEntropyLoss()  # クラス分けの場合
