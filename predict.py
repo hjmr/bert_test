@@ -16,6 +16,8 @@ def parse_arg():
     parser.add_argument("--load_model", type=str, nargs=1, help="a path to trained net.")
     parser.add_argument("--index", type=int, default=0, help="index of the text to be predicted.")
     #
+    parser.add_argument("--save_html", type=str, help="output HTML file.")
+    #
     parser.add_argument("test_tsv", type=str, nargs=1, help="TSV file for test data.")
     parser.add_argument("vocab_file", type=str, nargs=1, help="a vocabulary file.")
     return parser.parse_args()
@@ -122,7 +124,11 @@ def run_main():
     preds, attention_probs = predict(net, inputs)
 
     html = mk_html(args.index, batch, preds, attention_probs, field_set.tokenizer)
-    print(html)
+    if args.save_html is not None:
+        with optn(args.save_html, "w") as f:
+            f.write(html)
+    else:
+        print(html)
 
 
 if __name__ == "__main__":
