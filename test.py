@@ -15,7 +15,7 @@ def parse_arg():
     #
     parser.add_argument("--load_model", type=str, nargs=1, help="a path to trained net.")
     #
-    parser.add_argument("test_tsv", type=str, nargs=1, help="TSV file for test data.")
+    parser.add_argument("tsv_file", type=str, nargs=1, help="TSV file for test.")
     parser.add_argument("vocab_file", type=str, nargs=1, help="a vocabulary file.")
     return parser.parse_args()
 
@@ -54,7 +54,7 @@ def run_main():
 
     print("1. preparing datasets ... ", end="", flush=True)
     field_set = FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
-    test_ds = load_data_set(args.test_tsv[0], field_set)
+    test_ds = load_data_set(args.tsv_file[0], field_set)
     test_dl = get_data_loader(test_ds, args.batch_size, for_train=False)
     field_set.build_vocab(test_ds)
     print("done.", flush=True)

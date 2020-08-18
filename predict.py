@@ -18,7 +18,7 @@ def parse_arg():
     #
     parser.add_argument("--save_html", type=str, help="output HTML file.")
     #
-    parser.add_argument("test_tsv", type=str, nargs=1, help="TSV file for test data.")
+    parser.add_argument("tsv_file", type=str, nargs=1, help="TSV file for test.")
     parser.add_argument("vocab_file", type=str, nargs=1, help="a vocabulary file.")
     return parser.parse_args()
 
@@ -111,7 +111,7 @@ def run_main():
 
     print("1. preparing datasets ... ", end="", flush=True)
     field_set = FieldSet(args.vocab_file[0], args.text_length, args.mecab_dict)
-    test_ds = load_data_set(args.test_tsv[0], field_set)
+    test_ds = load_data_set(args.tsv_file[0], field_set)
     test_dl = get_data_loader(test_ds, args.batch_size, for_train=False)
     print("done.", flush=True)
 
