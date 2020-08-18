@@ -19,11 +19,11 @@ def parse_arg():
     parser.add_argument("--text_length", type=int, default=256, help="the length of texts.")
     parser.add_argument("--random_seed", type=int, help="a random seed.")
     #
-    parser.add_argument("--conf", type=str, nargs=1, help="a BERT configuration file.")
-    parser.add_argument("--bert_model", type=str, nargs=1, help="a trained BERT model file.")
-    #
     parser.add_argument("--epoch", type=int, default=5, help="train epochs.")
     parser.add_argument("--save_path", type=str, help="a file to save trained net.")
+    #
+    parser.add_argument("conf", type=str, nargs=1, help="a BERT configuration file.")
+    parser.add_argument("bert_model", type=str, nargs=1, help="a trained BERT model file.")
     #
     parser.add_argument("train_tsv", type=str, nargs=1, help="TSV file for train data.")
     parser.add_argument("vocab_file", type=str, nargs=1, help="a vocabulary file.")
