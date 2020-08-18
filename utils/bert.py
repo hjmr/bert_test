@@ -7,7 +7,6 @@
 # https://github.com/huggingface/pytorch-pretrained-BERT/blob/master/LICENSE
 
 
-
 # 必要なパッケージのimport
 
 import copy
@@ -220,7 +219,7 @@ class BertSelfAttention(nn.Module):
 
     def transpose_for_scores(self, x):
         '''multi-head Attention用にテンソルの形を変換する
-        [batch_size, seq_len, hidden] → [batch_size, 12, seq_len, hidden/12] 
+        [batch_size, seq_len, hidden] → [batch_size, 12, seq_len, hidden/12]
         '''
         new_x_shape = x.size()[
             :-1] + (self.num_attention_heads, self.attention_head_size)
@@ -632,7 +631,7 @@ class BertForMaskedLM(nn.Module):
 
 
 # 学習済みモデルのロード
-def set_learned_params(net, weights_path = "./weights/pytorch_model.bin"):
+def set_learned_params(net, weights_path="./weights/pytorch_model.bin", verbose=False):
 
     # セットするパラメータを読み込む
     loaded_state_dict = torch.load(weights_path)
@@ -651,7 +650,8 @@ def set_learned_params(net, weights_path = "./weights/pytorch_model.bin"):
     for index, (key_name, value) in enumerate(loaded_state_dict.items()):
         name = param_names[index]  # 現在のネットワークでのパラメータ名を取得
         new_state_dict[name] = value  # 値を入れる
-        print(str(key_name)+"→"+str(name))  # 何から何に入ったかを表示
+        if verbose:
+            print(str(key_name)+"→"+str(name))  # 何から何に入ったかを表示
 
         # 現在のネットワークのパラメータを全部ロードしたら終える
         if (index+1 - len(param_names)) >= 0:
