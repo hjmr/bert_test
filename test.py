@@ -3,8 +3,10 @@ from tqdm import tqdm
 
 import torch
 
+from utils.bert import BertModel, get_config
 # from dataset_jp_text import FieldSet, load_data_set, get_data_loader
 from dataset_IMDb import FieldSet, load_data_set, get_data_loader
+from bert_cls import BertClassifier
 
 
 def parse_arg():
@@ -13,7 +15,8 @@ def parse_arg():
     parser.add_argument("--batch_size", type=int, default=16, help="batch size.")
     parser.add_argument("--text_length", type=int, default=256, help="the length of texts.")
     #
-    parser.add_argument("--load_model", type=str, nargs=1, help="a path to trained net.")
+    parser.add_argument("--conf", type=str, nargs=1, help="a BERT configuration file.")
+    parser.add_argument("--load_path", type=str, nargs=1, help="a path to trained net.")
     #
     parser.add_argument("tsv_file", type=str, nargs=1, help="TSV file for test.")
     parser.add_argument("vocab_file", type=str, nargs=1, help="a vocabulary file.")
@@ -60,7 +63,10 @@ def run_main():
     print("done.", flush=True)
 
     print("2. loading network ... ", end="", flush=True)
-    net = torch.load(args.load_model[0], map_location=torch.device('cpu'))
+    conf = get_config(file_path=args.conf[0])
+    bert_base = BertModel(conf)
+    net = BertClassifier(bert_base, out_features=2)
+    net.load_state_dict(torch.load(args.load_path[0]))
     net.eval()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

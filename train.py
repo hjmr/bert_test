@@ -20,7 +20,7 @@ def parse_arg():
     parser.add_argument("--random_seed", type=int, help="a random seed.")
     #
     parser.add_argument("--conf", type=str, nargs=1, help="a BERT configuration file.")
-    parser.add_argument("--model", type=str, nargs=1, help="a trained BERT model file.")
+    parser.add_argument("--bert_model", type=str, nargs=1, help="a trained BERT model file.")
     #
     parser.add_argument("--epoch", type=int, default=5, help="train epochs.")
     parser.add_argument("--save_path", type=str, help="a file to save trained net.")
@@ -153,7 +153,7 @@ def run_main():
     print("2. preparing network ... ", end="", flush=True)
     conf = get_config(file_path=args.conf[0])
     bert_base = BertModel(conf)
-    bert_base = set_learned_params(bert_base, weights_path=args.model[0])
+    bert_base = set_learned_params(bert_base, weights_path=args.bert_model[0])
     net = BertClassifier(bert_base, out_features=2)  # out_features = クラス数
     net.train()
 
@@ -166,7 +166,7 @@ def run_main():
     data_loader_set = {"train": train_dl, "validation": validation_dl}
     net_trained = train_model(net, data_loader_set, criterion, optimizer, args.epoch)
     if args.save_path is not None:
-        torch.save(net_trained, args.save_path)
+        torch.save(net_trained.to("cpu").state_dict(), args.save_path)
 
 
 if __name__ == "__main__":
