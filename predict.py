@@ -3,8 +3,8 @@ import argparse
 import torch
 
 from utils.bert import BertModel, get_config
-# from dataset_jp_text import FieldSet, load_data_set, get_data_loader
-from dataset_IMDb import FieldSet, load_data_set, get_data_loader
+from dataset_jp_text import FieldSet, load_data_set, get_data_loader
+# from dataset_IMDb import FieldSet, load_data_set, get_data_loader
 from bert_cls import BertClassifier
 
 
