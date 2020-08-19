@@ -16,30 +16,38 @@ class FieldSet():
         self.vocab, self.ids_to_tokens = self._load_vocab(vocab_file)
 
     def _prepare(self, max_text_length, use_basic_form):
-        def _wakati_jp_text(text):
+        def _han2zen(_text):
+            _zenkaku_list = "".join(chr(0xff01 + i) for i in range(94))
+            _hankaku_list = "".join(chr(0x21 + i) for i in range(94))
+            _han2zen_table = str.maketrans(_hankaku_list, _zenkaku_list)
+            _text = _text.translate(_han2zen_table)
+            return _text
+
+        def _wakati_jp_text(_text):
             self.tagger.parse("")  # to avoid bug
 
-            word_list = []
-            token = self.tagger.parseToNode(text.strip())
-            while token:
-                features = token.feature.split(",")
-                if features[0] == "記号" and features[1] == "句点":
-                    word_list.append(".")
-                elif features[0] == "記号" and features[1] == "読点":
-                    word_list.append(",")
+            _word_list = []
+            _token = self.tagger.parseToNode(_text.strip())
+            while _token:
+                _features = _token.feature.split(",")
+                if _features[0] == "記号" and _features[1] == "句点":
+                    _word_list.append(".")
+                elif _features[0] == "記号" and _features[1] == "読点":
+                    _word_list.append(",")
                 else:
                     if use_basic_form:
-                        word_list.append(features[6] if 0 < len(features[6]) else token.surface)
+                        _word_list.append(_features[6] if 0 < len(_features[6]) else _token.surface)
                     else:
-                        word_list.append(token.surface)
-                token = token.next
-            wakati = " ".join(word_list)
-            return wakati
+                        _word_list.append(_token.surface)
+                _token = _token.next
+            _wakati = " ".join(_word_list)
+            return _wakati
 
-        def tokenize_jp(text, tokenizer=self.tokenizer):
-            wakati = _wakati_jp_text(text)
-            tokens = tokenizer.tokenize(wakati)
-            return tokens
+        def tokenize_jp(_text, tokenizer=self.tokenizer):
+            _zenkaku_text = _han2zen(_text)
+            _wakati = _wakati_jp_text(_zenkaku_text)
+            _tokens = tokenizer.tokenize(_wakati)
+            return _tokens
 
         text_field = torchtext.data.Field(
             sequential=True,
