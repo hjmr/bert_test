@@ -18,7 +18,7 @@ import collections
 import torch
 from torch import nn
 
-from utils.tokenizer import BasicTokenizer, WordpieceTokenizer
+from utils.tokenizer import BasicTokenizer, WordpieceTokenizer, whitespace_tokenize
 
 
 def get_config(file_path):
@@ -694,7 +694,7 @@ def load_vocab(vocab_file):
 class BertTokenizer(object):
     '''BERT用の文章の単語分割クラスを実装'''
 
-    def __init__(self, vocab_file, do_lower_case=True):
+    def __init__(self, vocab_file, do_lower_case=True, do_basic_tokenize=True):
         '''
         vocab_file：ボキャブラリーへのパス
         do_lower_case：前処理で単語を小文字化するかどうか
@@ -707,14 +707,18 @@ class BertTokenizer(object):
         never_split = ("[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]")
         # (注釈)上記の単語は途中で分割させない。これで一つの単語とみなす
 
-        self.basic_tokenizer = BasicTokenizer(do_lower_case=do_lower_case,
+        if do_basic_tokenize:
+            _basic_tokenizer = BasicTokenizer(do_lower_case=do_lower_case,
                                               never_split=never_split)
+            self.basic_tokenize = _basic_tokenizer.tokenize
+        else:
+            self.basic_tokenize = whitespace_tokenize
         self.wordpiece_tokenizer = WordpieceTokenizer(vocab=self.vocab)
 
     def tokenize(self, text):
         '''文章を単語に分割する関数'''
         split_tokens = []  # 分割後の単語たち
-        for token in self.basic_tokenizer.tokenize(text):
+        for token in self.basic_tokenize(text):
             for sub_token in self.wordpiece_tokenizer.tokenize(token):
                 split_tokens.append(sub_token)
         return split_tokens
