@@ -141,9 +141,9 @@ def run_main():
         init_random_seed(args.random_seed)
 
     if args.IMDb:
-        ds = ds_jptxt
-    else:
         ds = ds_imdb
+    else:
+        ds = ds_jptxt
 
     print("1. preparing datasets ... ", end="", flush=True)
     field_set = ds.FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
