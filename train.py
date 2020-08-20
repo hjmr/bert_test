@@ -7,8 +7,8 @@ import numpy as np
 import torch
 
 from utils.bert import BertModel, get_config, set_learned_params
-from dataset_jp_text import FieldSet, load_data_set, get_data_loader
-# from dataset_IMDb import FieldSet, load_data_set, get_data_loader
+import dataset_jp_text as ds_jptxt
+import dataset_IMDb as ds_imdb
 from bert_cls import BertClassifier
 
 
@@ -21,6 +21,7 @@ def parse_arg():
     #
     parser.add_argument("--epoch", type=int, default=5, help="train epochs.")
     parser.add_argument("--save_path", type=str, help="a file to save trained net.")
+    parser.add_argument("--IMDb", action="store_true", help="add this option when using with IMDb dataset.")
     #
     parser.add_argument("conf", type=str, nargs=1, help="a BERT configuration file.")
     parser.add_argument("bert_model", type=str, nargs=1, help="a trained BERT model file.")
@@ -139,15 +140,20 @@ def run_main():
     if args.random_seed is not None:
         init_random_seed(args.random_seed)
 
-    print("1. preparing datasets ... ", end="", flush=True)
-    field_set = FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
+    if args.IMDb:
+        ds = ds_jptxt
+    else:
+        ds = ds_imdb
 
-    data_set = load_data_set(args.train_tsv[0], field_set)
+    print("1. preparing datasets ... ", end="", flush=True)
+    field_set = ds.FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
+
+    data_set = ds.load_data_set(args.train_tsv[0], field_set)
     train_ds, validation_ds = data_set.split(split_ratio=0.8, random_state=random.seed(1234))
     field_set.build_vocab(train_ds)
 
-    train_dl = get_data_loader(train_ds, args.batch_size, for_train=True)
-    validation_dl = get_data_loader(validation_ds, args.batch_size, for_train=False)
+    train_dl = ds.get_data_loader(train_ds, args.batch_size, for_train=True)
+    validation_dl = ds.get_data_loader(validation_ds, args.batch_size, for_train=False)
     print("done.", flush=True)
 
     print("2. preparing network ... ", end="", flush=True)
