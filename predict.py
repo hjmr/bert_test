@@ -3,8 +3,8 @@ import argparse
 import torch
 
 from utils.bert import BertModel, get_config
-from dataset_jp_text import FieldSet, load_data_set, get_data_loader
-# from dataset_IMDb import FieldSet, load_data_set, get_data_loader
+import dataset_jp_text as ds_jptxt
+import dataset_IMDb as ds_imdb
 from bert_cls import BertClassifier
 
 
@@ -16,6 +16,8 @@ def parse_arg():
     #
     parser.add_argument("--index", type=int, default=0, help="index of the text to be predicted.")
     parser.add_argument("--save_html", type=str, help="output HTML file.")
+    #
+    parser.add_argument("--IMDb", action="store_true", help="specify this when using IMDb dataset.")
     #
     parser.add_argument("conf", type=str, nargs=1, help="a BERT configuration file.")
     parser.add_argument("load_path", type=str, nargs=1, help="a path to trained net.")
@@ -111,10 +113,15 @@ def predict(net, inputs):
 def run_main():
     args = parse_arg()
 
+    if args.IMDb:
+        ds = ds_imdb
+    else:
+        ds = ds_jptxt
+
     print("1. preparing datasets ... ", end="", flush=True)
-    field_set = FieldSet(args.vocab_file[0], args.text_length, args.mecab_dict)
-    test_ds = load_data_set(args.tsv_file[0], field_set)
-    test_dl = get_data_loader(test_ds, args.batch_size, for_train=False)
+    field_set = ds.FieldSet(args.vocab_file[0], args.text_length, args.mecab_dict)
+    test_ds = ds.load_data_set(args.tsv_file[0], field_set)
+    test_dl = ds.get_data_loader(test_ds, args.batch_size, for_train=False)
     field_set.build_vocab(test_ds)
     print("done.", flush=True)
 

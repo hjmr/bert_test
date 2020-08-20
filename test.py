@@ -4,8 +4,8 @@ from tqdm import tqdm
 import torch
 
 from utils.bert import BertModel, get_config
-from dataset_jp_text import FieldSet, load_data_set, get_data_loader
-# from dataset_IMDb import FieldSet, load_data_set, get_data_loader
+import dataset_jp_text as ds_jptxt
+import dataset_IMDb as ds_imdb
 from bert_cls import BertClassifier
 
 
@@ -14,6 +14,8 @@ def parse_arg():
     parser.add_argument("--mecab_dict", type=str, help="MeCab dictionary.")
     parser.add_argument("--batch_size", type=int, default=16, help="batch size.")
     parser.add_argument("--text_length", type=int, default=256, help="the length of texts.")
+    #
+    parser.add_argument("--IMDb", action="store_true", help="add this option when using IMDb dataset.")
     #
     parser.add_argument("conf", type=str, nargs=1, help="a BERT configuration file.")
     parser.add_argument("load_path", type=str, nargs=1, help="a path to trained net.")
@@ -54,11 +56,15 @@ def test_model(net, data_loader, criterion, device):
 
 def run_main():
     args = parse_arg()
+    if args.IMDb:
+        ds = ds_imdb
+    else:
+        ds = ds_jptxt
 
     print("1. preparing datasets ... ", end="", flush=True)
-    field_set = FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
-    test_ds = load_data_set(args.tsv_file[0], field_set)
-    test_dl = get_data_loader(test_ds, args.batch_size, for_train=False)
+    field_set = ds.FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
+    test_ds = ds.load_data_set(args.tsv_file[0], field_set)
+    test_dl = ds.get_data_loader(test_ds, args.batch_size, for_train=False)
     field_set.build_vocab(test_ds)
     print("done.", flush=True)
 
