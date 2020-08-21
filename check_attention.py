@@ -136,7 +136,7 @@ def run_main():
     net.to(device)
     print("done.", flush=True)
 
-    print("3. predicting.", flush=True)
+    print("3. generating HTML file.", flush=True)
     batch = next(iter(test_dl))
     inputs = batch.Text[0].to(device)  # 文章
     preds, attention_probs = predict(net, inputs)
