@@ -146,11 +146,11 @@ def run_main():
         ds = ds_jptxt
 
     print("1. preparing datasets ... ", end="", flush=True)
-    field_set = ds.FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
+    dataset_generator = ds.DataSetGenerator(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
 
-    data_set = ds.load_data_set(args.train_tsv[0], field_set)
+    data_set = dataset_generator.loadTSV(args.train_tsv[0])
     train_ds, validation_ds = data_set.split(split_ratio=0.8, random_state=random.seed(1234))
-    field_set.build_vocab(train_ds)
+    dataset_generator.build_vocab(train_ds)
 
     train_dl = ds.get_data_loader(train_ds, args.batch_size, for_train=True)
     validation_dl = ds.get_data_loader(validation_ds, args.batch_size, for_train=False)

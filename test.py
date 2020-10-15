@@ -62,10 +62,10 @@ def run_main():
         ds = ds_jptxt
 
     print("1. preparing datasets ... ", end="", flush=True)
-    field_set = ds.FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
-    test_ds = ds.load_data_set(args.tsv_file[0], field_set)
+    dataset_generator = ds.DataSetGenerator(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
+    test_ds = dataset_generator.loadTSV(args.tsv_file[0])
     test_dl = ds.get_data_loader(test_ds, args.batch_size, for_train=False)
-    field_set.build_vocab(test_ds)
+    dataset_generator.build_vocab(test_ds)
     print("done.", flush=True)
 
     print("2. loading network ... ", end="", flush=True)

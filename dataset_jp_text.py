@@ -1,18 +1,19 @@
-import MeCab
+import csv
 
+import MeCab
 import torchtext
 
 from utils.bert import BertTokenizer, load_vocab
 
 
-class FieldSet():
+class DataSetGenerator():
     def __init__(self, vocab_file, max_text_length=256, use_basic_form=False, mecab_dict=None):
         self.tokenizer = BertTokenizer(vocab_file=vocab_file, do_lower_case=False, do_basic_tokenize=False)
         if mecab_dict is not None:
             self.tagger = MeCab.Tagger("-d {}".format(mecab_dict))
         else:
             self.tagger = MeCab.Tagger("")
-        self.text, self.label = self._prepare(max_text_length, use_basic_form)
+        self.text_field, self.label_field = self._prepare(max_text_length, use_basic_form)
         self.vocab, self.ids_to_tokens = self._load_vocab(vocab_file)
 
     def _prepare(self, max_text_length, use_basic_form):
@@ -72,15 +73,27 @@ class FieldSet():
         return vocab, ids_to_tokens
 
     def build_vocab(self, train_ds):
-        self.text.build_vocab(train_ds, min_freq=1)
-        self.text.vocab.stoi = self.vocab
+        self.text_field.build_vocab(train_ds, min_freq=1)
+        self.text_field.vocab.stoi = self.vocab
 
+    def loadTSV(self, tsv_file):
+        _ds = torchtext.data.TabularDataset(
+            path=tsv_file, format="tsv",
+            fields=[('Text', self.text_field), ('Label', self.label_field)])
+        return _ds
 
-def load_data_set(tsv_file, field_set):
-    _ds = torchtext.data.TabularDataset(
-        path=tsv_file, format="tsv",
-        fields=[('Text', field_set.text), ('Label', field_set.label)])
-    return _ds
+    def loadTSV_at_index(self, tsv_file, index):
+        _fields = [('Text', self.text_field), ('Label', self.label_field)]
+        with open(tsv_file, "r") as f:
+            _reader = csv.reader(f, delimiter="\t")
+            for i, row in enumerate(_reader):
+                if i == index:
+                    _row = row
+                    break
+        _data = []
+        _data.append(torchtext.data.Example.fromlist(_row, _fields))
+        _ds = torchtext.data.Dataset(_data, _fields)
+        return _ds
 
 
 def get_data_loader(data_set, batch_size=16, for_train=False):
@@ -105,30 +118,36 @@ if __name__ == "__main__":
         parser.add_argument("--mecab_dict", type=str, help="MeCab dictionary.")
         parser.add_argument("--batch_size", type=int, default=16, help="batch size.")
         parser.add_argument("--text_length", type=int, default=256, help="the length of texts.")
-        parser.add_argument("--index", type=int, default=1, help="index of text to be shown.")
-        parser.add_argument("train_tsv", type=str, nargs=1, help="TSV file for train data.")
-        parser.add_argument("test_tsv", type=str, nargs=1, help="TSV file for test data.")
+        parser.add_argument("--index", type=int, help="index of text to be shown.")
+        parser.add_argument("tsv_file", type=str, nargs=1, help="a TSV file.")
         parser.add_argument("vocab_file", type=str, nargs=1, help="a vocabulary file.")
         return parser.parse_args()
 
     args = parse_arg()
 
-    field_set = FieldSet(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
+    generator = DataSetGenerator(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
 
-    train_validation_ds = load_data_set(args.train_tsv[0], field_set)
-    train_ds, validation_ds = train_validation_ds.split(split_ratio=0.8)
-    field_set.build_vocab(train_ds)
+    if args.index is not None:
+        data_set = generator.loadTSV_at_index(args.tsv_file[0], args.index)
+        generator.build_vocab(data_set)
+        data_loader = get_data_loader(data_set)
+        batch = next(iter(data_loader))
+        print(batch)
+        print(batch.Text, batch.Label)
+        text_minibatch = (batch.Text[0][0]).numpy()
+        text = generator.tokenizer.convert_ids_to_tokens(text_minibatch)
+        print(text)
+    else:
+        data_set = generator.loadTSV(args.tsv_file[0])
+        generator.build_vocab(data_set)
+        data_loader = get_data_loader(data_set, args.batch_size)
 
-    train_dl = get_data_loader(train_ds, args.batch_size, for_train=True)
-    validation_dl = get_data_loader(validation_ds, args.batch_size)
-    test_dl = get_data_loader(load_data_set(args.test_tsv[0], field_set), args.batch_size)
+        batch = next(iter(data_loader))
+        print(batch.Text[0])
+        print(batch.Label)
 
-    batch = next(iter(validation_dl))
-    print(batch.Text)
-    print(batch.Label)
-
-    # ミニバッチの1文目を確認してみる
-    text_minibatch = (batch.Text[0][args.index]).numpy()
-    # IDを単語に戻す
-    text = field_set.tokenizer.convert_ids_to_tokens(text_minibatch)
-    print(text)
+        # ミニバッチの1文目を確認してみる
+        text_minibatch = (batch.Text[0][0]).numpy()
+        # IDを単語に戻す
+        text = generator.tokenizer.convert_ids_to_tokens(text_minibatch)
+        print(text)

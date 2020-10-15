@@ -1,42 +1,43 @@
 import string
 import re
 import random
+import csv
 
 import torchtext
 
 from utils.bert import BertTokenizer, load_vocab
 
 
-class FieldSet():
+class DataSetGenerator():
     def __init__(self, vocab_file, max_text_length, mecab_dict=None):
         self.tokenizer = BertTokenizer(vocab_file=vocab_file, do_lower_case=True)
-        self.text, self.label = self._prepare(max_text_length)
+        self.text_field, self.label_field = self._prepare(max_text_length)
         self.vocab, self.ids_to_tokens = self._load_vocab(vocab_file)
 
     def _prepare(self, max_text_length):
         def _preprocess_IMDb(text):
             '''IMDbの前処理'''
             # 改行コードを消去
-            text = re.sub('<br />', '', text)
+            _txt = re.sub('<br />', '', text)
 
             # カンマ、ピリオド以外の記号をスペースに置換
             for p in string.punctuation:
                 if (p == ".") or (p == ","):
                     continue
                 else:
-                    text = text.replace(p, " ")
+                    _txt = text.replace(p, " ")
 
             # ピリオドなどの前後にはスペースを入れておく
-            text = text.replace(".", " . ")
-            text = text.replace(",", " , ")
-            return text
+            _txt = text.replace(".", " . ")
+            _txt = text.replace(",", " , ")
+            return _txt
 
-        def tokenize_IMDb(text, tokenizer=self.tokenizer):
-            text = _preprocess_IMDb(text)
-            tokens = tokenizer.tokenize(text)
-            return tokens
+        def tokenize_IMDb(_txt, tokenizer=self.tokenizer):
+            _txt = _preprocess_IMDb(_txt)
+            _tokens = tokenizer.tokenize(_txt)
+            return _tokens
 
-        text_field = torchtext.data.Field(
+        _tf = torchtext.data.Field(
             sequential=True,
             use_vocab=True,
             fix_length=max_text_length,
@@ -51,23 +52,35 @@ class FieldSet():
             unk_token="[UNK]",
             batch_first=True,
             stop_words=None)
-        label_field = torchtext.data.Field(sequential=False, use_vocab=False)
-        return text_field, label_field
+        _lf = torchtext.data.Field(sequential=False, use_vocab=False)
+        return _tf, _lf
 
     def _load_vocab(self, vocab_file):
-        vocab, ids_to_tokens = load_vocab(vocab_file)
-        return vocab, ids_to_tokens
+        _v, _i2t = load_vocab(vocab_file)
+        return _v, _i2t
 
     def build_vocab(self, train_ds):
-        self.text.build_vocab(train_ds, min_freq=1)
-        self.text.vocab.stoi = self.vocab
+        self.text_field.build_vocab(train_ds, min_freq=1)
+        self.text_field.vocab.stoi = self.vocab
 
+    def loadTSV(self, tsv_file):
+        _ds = torchtext.data.TabularDataset(
+            path=tsv_file, format="tsv",
+            fields=[('Text', self.text_field), ('Label', self.label_field)])
+        return _ds
 
-def load_data_set(tsv_file, field_set):
-    _ds = torchtext.data.TabularDataset(
-        path=tsv_file, format="tsv",
-        fields=[('Text', field_set.text), ('Label', field_set.label)])
-    return _ds
+    def loadTSV_at_index(self, tsv_file, index):
+        _fields = [('Text', self.text_field), ('Label', self.label_field)]
+        with open(tsv_file, "r") as f:
+            _reader = csv.reader(f, delimiter="\t")
+            for i, row in enumerate(_reader):
+                if i == index:
+                    _row = row
+                    break
+        _data = []
+        _data.append(torchtext.data.Example.fromlist(_row, _fields))
+        _ds = torchtext.data.Dataset(_data, _fields)
+        return _ds
 
 
 def get_data_loader(data_set, batch_size=16, for_train=False):
@@ -98,15 +111,15 @@ if __name__ == "__main__":
 
     args = parse_arg()
 
-    field_set = FieldSet(args.vocab_file[0], args.text_length)
+    generator = DataSetGenerator(args.vocab_file[0], args.text_length)
 
-    train_validation_ds = load_data_set(args.train_tsv[0], field_set)
+    train_validation_ds = generator.loadTSV(args.train_tsv[0])
     train_ds, validation_ds = train_validation_ds.split(split_ratio=0.8, random_state=random.seed(1234))
-    field_set.build_vocab(train_ds)
+    generator.build_vocab(train_ds)
 
     train_dl = get_data_loader(train_ds, args.batch_size, for_train=True)
     validation_dl = get_data_loader(validation_ds, args.batch_size)
-    test_dl = get_data_loader(load_data_set(args.test_tsv[0], field_set), args.batch_size)
+    test_dl = get_data_loader(generator.loadTSV(args.test_tsv[0]), args.batch_size)
 
     batch = next(iter(validation_dl))
     print(batch.Text)
@@ -115,5 +128,5 @@ if __name__ == "__main__":
     # ミニバッチの1文目を確認してみる
     text_minibatch_1 = (batch.Text[0][1]).numpy()
     # IDを単語に戻す
-    text = field_set.tokenizer.convert_ids_to_tokens(text_minibatch_1)
+    text = generator.tokenizer.convert_ids_to_tokens(text_minibatch_1)
     print(text)

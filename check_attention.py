@@ -34,13 +34,8 @@ def highlight(word, attn):
     return '<span style="background-color: {}"> {}</span>'.format(html_color, word)
 
 
-def mk_html(index, batch, preds, normlized_weights, tokenizer):
+def mk_html(sentence, label, pred, normlized_weights, tokenizer):
     "HTMLデータを作成する"
-
-    # indexの結果を抽出
-    sentence = batch.Text[0][index]  # 文章
-    label = batch.Label[index]  # ラベル
-    pred = preds[index]  # 予測
 
     # ラベルと予測結果を文字に置き換え
     if label == 0:
@@ -62,7 +57,7 @@ def mk_html(index, batch, preds, normlized_weights, tokenizer):
         # indexのAttentionを抽出と規格化
         # 0単語目[CLS]の、i番目のMulti-Head Attentionを取り出す
         # indexはミニバッチの何個目のデータかをしめす
-        attens = normlized_weights[index, i, 0, :]
+        attens = normlized_weights[0, i, 0, :]
         attens /= attens.max()
 
         html += '[BERTのAttentionを可視化_' + str(i+1) + ']<br>'
@@ -80,7 +75,7 @@ def mk_html(index, batch, preds, normlized_weights, tokenizer):
     # 12種類のAttentionの平均を求める。最大値で規格化
     # all_attens = attens*0  # all_attensという変数を作成する
     for i in range(12):
-        attens += normlized_weights[index, i, 0, :]
+        attens += normlized_weights[0, i, 0, :]
     attens /= attens.max()
 
     html += '[BERTのAttentionを可視化_ALL]<br>'
@@ -119,10 +114,10 @@ def run_main():
         ds = ds_jptxt
 
     print("1. preparing datasets ... ", end="", flush=True)
-    field_set = ds.FieldSet(args.vocab_file[0], args.text_length, args.mecab_dict)
-    test_ds = ds.load_data_set(args.tsv_file[0], field_set)
-    test_dl = ds.get_data_loader(test_ds, args.batch_size, for_train=False)
-    field_set.build_vocab(test_ds)
+    dataset_generator = ds.DataSetGenerator(args.vocab_file[0], args.text_length, args.mecab_dict)
+    dataset = dataset_generator.loadTSV_at_index(args.tsv_file[0], args.index)
+    dataset_generator.build_vocab(dataset)
+    dataloader = ds.get_data_loader(dataset, args.batch_size, for_train=False)
     print("done.", flush=True)
 
     print("2. loading network ... ", end="", flush=True)
@@ -137,11 +132,11 @@ def run_main():
     print("done.", flush=True)
 
     print("3. generating HTML file.", flush=True)
-    batch = next(iter(test_dl))
-    inputs = batch.Text[0].to(device)  # 文章
+    example = next(iter(dataloader))
+    inputs = example.Text[0].to(device)  # 文章
     preds, attention_probs = predict(net, inputs)
 
-    html = mk_html(args.index, batch, preds, attention_probs, field_set.tokenizer)
+    html = mk_html(example.Text[0][0], example.Label[0], preds[0], attention_probs, dataset_generator.tokenizer)
     if args.save_html is not None:
         with open(args.save_html, "w") as f:
             f.write(html)
