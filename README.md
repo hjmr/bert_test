@@ -19,8 +19,7 @@ BERTを用いてテキストの分類をするための一連のプログラム�
 手元では以下のモデルで動作を確認している。
 - [京大・黒橋研のモデル](http://nlp.ist.i.kyoto-u.ac.jp/index.php?BERT日本語Pretrainedモデル)（日本語）
 - [Googleの多言語モデル](https://github.com/google-research/bert/blob/master/multilingual.md)（多言語）
-- [Hugging Faceモデル](https://huggingface.co/transformers/pretrained_models.html)
-    - いろいろあるけど試したのは ``bert-base-uncased``（英語）
+- [Hugging Faceモデル](https://huggingface.co/transformers/pretrained_models.html)（いろいろあるけど試したのは ``bert-base-uncased``（英語））
 
 以下のモデルは使えそうだけど未チェック
 - [Laboro.AI BERTモデル](https://laboro.ai/column/laboro-bert/)（多分日本語）
@@ -39,6 +38,8 @@ BERTを用いてテキストの分類をするための一連のプログラム�
 
 ### train.py
 
+事前学習済みBERTモデルの追加学習を行う。
+
 #### 利用法
 
 以下のように実行する。
@@ -56,13 +57,13 @@ python3 train.py [<options>] <model_config.json> <model.bin> <train_data.tsv> <m
 実際の実行は以下のように行う。
 
 ``` shell
-python3 train.py --batch_size 16 --text_length 256 --epoch 100 --save_path ./results/ ./model/bert_config.json ./model/pytorth_model.bin ./data/train.tsv ./model/vocab.txt
+$ python3 train.py --batch_size 16 --text_length 256 --epoch 100 --save_path ./results/ ./model/bert_config.json ./model/pytorth_model.bin ./data/train.tsv ./model/vocab.txt
 ```
 
 Poetryから実行する場合は
 
 ``` shell
-poetry run python  train.py --batch_size 16 --text_length 256 --epoch 100 --save_path ./results/ ./model/bert_config.json ./model/pytorth_model.bin ./data/train.tsv ./model/vocab.txt
+$ poetry run python  train.py --batch_size 16 --text_length 256 --epoch 100 --save_path ./results/ ./model/bert_config.json ./model/pytorth_model.bin ./data/train.tsv ./model/vocab.txt
 ```
 
 #### オプション
@@ -75,5 +76,28 @@ poetry run python  train.py --batch_size 16 --text_length 256 --epoch 100 --save
 - **--save_path** : 学習後のデータ等を保存するディレクトリを指定
 - **--IMDb** : IMDbのデータを利用する場合に指定
 
+### run_train_IMDb.sh / run_train_jp.sh
+
+訓練用のシェルスクリプト。
+スクリプト内のオプションやパスを変更して以下のように実行できる。
+
+``` shell
+$ bash run_train_jp.sh
+```
+
 ## 3. テスト
 
+### test.py
+
+#### 利用法
+
+#### オプション
+
+### run_test_IMDb.py / run_test_jp.py
+
+テスト用のシェルスクリプト。
+スクリプト内のオプションやパスを変更して以下のように実行できる。
+
+``` shell
+$ bash run_test_jp.sh
+```
