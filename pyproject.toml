@@ -6,9 +6,8 @@ authors = ["hjmr <2620990+hjmr@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-torch = "^1.6.0"
-torchtext = "^0.7.0"
 attrdict = "^2.0.1"
+torchtext = "^0.8.0"
 mecab = "^0.996.2"
 
 [tool.poetry.dev-dependencies]
