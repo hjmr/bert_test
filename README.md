@@ -34,6 +34,25 @@ BERTを用いてテキストの分類をするための一連のプログラム�
     Bizarre horror movie filled with famous faces     0
     日本ホラー映画の先駆けともいえる映画。   1
 
+日本語の場合は予め正規化（半角→全角や無駄な空白の除去，URLの除去など）をしておいた方が良いので，その場合は normalize_tsv.py を使って正規化しておくと良い。
+正規化しない場合は BERT 実行時に正規化できるので，まあ，やらなくてもOK。
+
+### normalize_tsv.py
+
+TSVファイルの正規化を行う。
+
+#### 利用法
+
+``` shell
+$ normalize_tsv.py [<option>] <TSV file>
+```
+
+- **TSV file** : 単語がタブ区切りで入ったファイル。最後の列には分類のためのラベルが入る。
+
+#### オプション
+
+- **--min_length** : テキストの最小文字数（あまりにも短い文章を省くために1文の最小値文字数を指定する）
+
 ## 2. 訓練
 
 ### train.py
@@ -41,8 +60,6 @@ BERTを用いてテキストの分類をするための一連のプログラム�
 事前学習済みBERTモデルの追加学習を行う。
 
 #### 利用法
-
-以下のように実行する。
 
 ``` shell
 python3 train.py [<options>] <model_config.json> <model.bin> <train_data.tsv> <model_vocab.txt>
@@ -68,6 +85,7 @@ $ poetry run python  train.py --batch_size 16 --text_length 256 --epoch 100 --sa
 
 #### オプション
 
+- **--normalize_text** : 日本語の正規化を行うかどうか（このオプションを指定すると正規化を行う。デフォルトでは正規化は行わない）
 - **--mecab_dict** : MeCabで標準以外の辞書を使う場合に辞書の場所を指定する。
 - **--batch_size** : バッチサイズを指定（デフォルト：16）
 - **--text_length** : BERTに一度に入力するテキストの単語数（デフォルト：256）
