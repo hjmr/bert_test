@@ -3,25 +3,34 @@ import csv
 import MeCab
 import torchtext
 
+from normalize_text import normalize_text
 from utils.bert import BertTokenizer, load_vocab
 
 
 class DataSetGenerator():
-    def __init__(self, vocab_file, max_text_length=256, use_basic_form=False, mecab_dict=None):
+    def __init__(self, vocab_file, max_text_length=256, **kwargs):
+        do_normalize_text = kwargs["do_normalize_text"] if "do_normalize_text" in kwargs else False
+        use_basic_form = kwargs["use_basic_form"] if "use_basic_form" in kwargs else False
+        mecab_dict = kwargs["mecab_dict"] if "mecab_dict" in kwargs else None
+
         self.tokenizer = BertTokenizer(vocab_file=vocab_file, do_lower_case=False, do_basic_tokenize=False)
         if mecab_dict is not None:
             self.tagger = MeCab.Tagger("-d {}".format(mecab_dict))
         else:
             self.tagger = MeCab.Tagger("")
-        self.text_field, self.label_field = self._prepare(max_text_length, use_basic_form)
+        self.text_field, self.label_field = self._prepare(max_text_length, do_normalize_text, use_basic_form)
         self.vocab, self.ids_to_tokens = self._load_vocab(vocab_file)
 
-    def _prepare(self, max_text_length, use_basic_form):
+    def _prepare(self, max_text_length, do_normalize_text, use_basic_form):
         def _han2zen(_text):
-            _zenkaku_list = "".join(chr(0xff01 + i) for i in range(94))
-            _hankaku_list = "".join(chr(0x21 + i) for i in range(94))
-            _han2zen_table = str.maketrans(_hankaku_list, _zenkaku_list)
-            _text = _text.translate(_han2zen_table)
+            if do_normalize_text:
+                """
+                _zenkaku_list = "".join(chr(0xff01 + i) for i in range(94))
+                _hankaku_list = "".join(chr(0x21 + i) for i in range(94))
+                _han2zen_table = str.maketrans(_hankaku_list, _zenkaku_list)
+                _text = _text.translate(_han2zen_table)
+                """
+                _text = normalize_text(_text)
             return _text
 
         def _wakati_jp_text(_text):
@@ -32,9 +41,9 @@ class DataSetGenerator():
             while _token:
                 _features = _token.feature.split(",")
                 if _features[0] == "記号" and _features[1] == "句点":
-                    _word_list.append(".")
+                    _word_list.append(_token.surface)
                 elif _features[0] == "記号" and _features[1] == "読点":
-                    _word_list.append(",")
+                    _word_list.append(_token.surface)
                 else:
                     if use_basic_form:
                         _word_list.append(_features[6] if 0 < len(_features[6]) else _token.surface)
@@ -149,5 +158,5 @@ if __name__ == "__main__":
         # ミニバッチの1文目を確認してみる
         text_minibatch = (batch.Text[0][0]).numpy()
         # IDを単語に戻す
-        text = generator.tokenizer.convert_ids_to_tokens(text_minibatch)
+        text=generator.tokenizer.convert_ids_to_tokens(text_minibatch)
         print(text)

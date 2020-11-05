@@ -14,6 +14,7 @@ from bert_cls import BertClassifier
 
 def parse_arg():
     parser = argparse.ArgumentParser(description="Train BERT model.")
+    parser.add_argument("--normalize_text", action="store_true", help="set if require to normalize Japanese text.")
     parser.add_argument("--mecab_dict", type=str, help="MeCab dictionary.")
     parser.add_argument("--batch_size", type=int, default=16, help="batch size.")
     parser.add_argument("--text_length", type=int, default=256, help="the length of texts.")
@@ -146,7 +147,8 @@ def run_main():
         ds = ds_jptxt
 
     print("1. preparing datasets ... ", end="", flush=True)
-    dataset_generator = ds.DataSetGenerator(args.vocab_file[0], args.text_length, mecab_dict=args.mecab_dict)
+    dataset_generator = ds.DataSetGenerator(
+        args.vocab_file[0], args.text_length, do_normalize_text=args.normalize_text, mecab_dict=args.mecab_dict)
 
     data_set = dataset_generator.loadTSV(args.train_tsv[0])
     train_ds, validation_ds = data_set.split(split_ratio=0.8, random_state=random.seed(1234))
