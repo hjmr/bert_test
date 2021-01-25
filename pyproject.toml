@@ -8,8 +8,8 @@ authors = ["hjmr <2620990+hjmr@users.noreply.github.com>"]
 python = "^3.8"
 attrdict = "^2.0.1"
 mecab = "^0.996.2"
-torch = {path = "../../packages/torch-1.8.0a0-cp39-cp39-macosx_11_1_arm64.whl"}
-torchtext = {path = "../../packages/torchtext-0.9.0a0+8eee23c-cp39-cp39-macosx_11_1_arm64.whl"}
+torch = {path = "../../packages/torch-1.8.0a0+unknown-cp39-cp39-macosx_11_1_arm64.whl"}
+torchtext = {path = "../../packages/torchtext-0.9.0a0+d56fffe-cp39-cp39-macosx_11_1_arm64.whl"}
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.4"
