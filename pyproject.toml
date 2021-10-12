@@ -7,8 +7,9 @@ authors = ["hjmr <2620990+hjmr@users.noreply.github.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 attrdict = "^2.0.1"
-mecab = "^0.996.2"
-torchtext = "^0.10.0"
+mecab = "^0.996.3"
+torch = "1.9.0"
+torchtext = "<0.10.1"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.5.3"
