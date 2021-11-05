@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "bert_test"
+name = "simple-text-clf"
 version = "0.1.0"
 description = ""
 authors = ["hjmr <2620990+hjmr@users.noreply.github.com>"]
